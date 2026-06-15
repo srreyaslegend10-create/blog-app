@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, request
 from flask_login import login_user, logout_user
 
 from app.forms import RegistrationForm, LoginForm
@@ -36,20 +36,38 @@ def register():
 @auth.route("/login", methods=["GET", "POST"])
 def login():
 
+    print("LOGIN ROUTE REACHED")
+
     form = LoginForm()
 
+    print("REQUEST METHOD:", request.method)
+
     if form.validate_on_submit():
+
+        print("FORM VALIDATED")
 
         user = User.query.filter_by(
             email=form.email.data
         ).first()
 
-        if user and bcrypt.check_password_hash(
-            user.password,
-            form.password.data
-        ):
-            login_user(user)
-            return redirect(url_for("main.home"))
+        print("EMAIL ENTERED:", form.email.data)
+        print("USER FOUND:", user)
+
+        if user:
+
+            password_match = bcrypt.check_password_hash(
+                user.password,
+                form.password.data
+            )
+
+            print("PASSWORD MATCH:", password_match)
+
+            if password_match:
+                login_user(user)
+                return redirect(url_for("main.home"))
+
+    else:
+        print("FORM ERRORS:", form.errors)
 
     return render_template("login.html", form=form)
 
